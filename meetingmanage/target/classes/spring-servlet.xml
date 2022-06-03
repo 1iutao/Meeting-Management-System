@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd http://www.springframework.org/schema/util https://www.springframework.org/schema/util/spring-util.xsd">
+<!--扫描meetingmanage，不开启过滤器-->
+    <context:component-scan base-package="org.mm.meetingmanage" use-default-filters="false" >
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+<!--    提供Controller请求转发，json自动转换等功能-->
+    <mvc:annotation-driven/>
+
+<!--    配置拦截器-->
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/**"/>
+            <mvc:exclude-mapping path="/images/**"/>
+            <mvc:exclude-mapping path="/styles/**"/>
+            <bean class="org.mm.meetingmanage.Interceptor.PermissInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
+    
+<!--    放行静态资源-->
+    <mvc:resources mapping="/**" location="/"/>
+
+<!--引入freemarkerproperties文件-->
+     <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+         <property name="locations">
+             <list>
+                 <value>classpath:freemarker-var.properties</value>
+             </list>
+         </property>
+     </bean>
+
+<!--    配置模板基本属性-->
+    <bean class="org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer">
+        <property name="templateLoaderPath" value="/WEB-INF/ftl/"/>    <!--        模板文件位置-->
+        <property name="defaultEncoding" value="UTF-8"/>
+        <property name="freemarkerVariables">          <!--        引入进来的配置-->
+            <map>
+                <entry key="root" value="${root}"/>
+            </map>
+        </property>
+        <property name="freemarkerSettings">     <!--        配置时间/搜索格式之类的-->
+            <props>
+                <prop key="template_update_delay">10</prop>        <!--    更新延迟时间-->
+                <prop key="locale">zh_CN</prop>         <!--    环境-->
+                <prop key="datetime_format">yyyy-MM-dd HH:mm:ss</prop>     <!--    设置时间格式-->
+                <prop key="date_format">yyyy-MM-dd</prop>     <!--    设置日期格式-->
+                <prop key="time_format">HH:mm:ss</prop>   <!--    时间-->
+                <prop key="number_format">#.####</prop>     <!--    数字格式-->
+            </props>
+        </property>
+    </bean>
+
+<!--    配置视图解析器-->
+    <bean class="org.springframework.web.servlet.view.freemarker.FreeMarkerViewResolver">
+        <property name="viewClass" value="org.springframework.web.servlet.view.freemarker.FreeMarkerView"/>
+        <property name="suffix" value=".ftl"/>    <!--    设置后缀-->
+        <property name="allowRequestOverride" value="true"/>
+        <property name="allowSessionOverride" value="true"/>
+        <property name="exposeSessionAttributes" value="true"/>
+        <property name="exposeRequestAttributes" value="true"/>
+        <property name="contentType" value="text/html;charset=utf-8"/>
+    </bean>
+</beans>
