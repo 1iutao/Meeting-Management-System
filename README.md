@@ -71,8 +71,27 @@ web场景下让前端用local stroage存储cookie，APP中使用客户端数据�
 
 只用简单配置一下数据源和mybatis，它就能帮我们完成数据库的很多工作。
 
-![image-20220611160620828](C:\Users\G\AppData\Roaming\Typora\typora-user-images\image-20220611160620828.png)
+<!--    配置数据源-->
+    <bean class="com.alibaba.druid.pool.DruidDataSource" id="dataSource">
+        <property name="username" value="${db.username}"/>
+        <property name="password" value="${db.password}"/>
+        <property name="url" value="${db.url}"/>
+    </bean>
 
+<!--    配置mybatis,有两个bean-->
+    <bean class="org.mybatis.spring.SqlSessionFactoryBean" id="sqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="typeAliasesPackage" value="org.mm.meetingmanage.model"/>    <!--放实体类的地方-->
+        <property name="mapperLocations">
+            <value>
+                classpath*:org/mm/meetingmanage/mapper/*.xml
+            </value>
+        </property>
+    </bean>
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer" id="mapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryBean"/>
+       <property name="basePackage" value="org.mm.meetingmanage.mapper"/>     <!-- 接口文件路径-->
+    </bean>
 
 
 *五、AOP*
@@ -83,5 +102,25 @@ web场景下让前端用local stroage存储cookie，APP中使用客户端数据�
 
 再配置AOP：通过AOP将CRUD定义为一个切面，整个service层的所有类都可以灵活切入，大大提升了开发效率。
 
-![image-20220611160924049](C:\Users\G\AppData\Roaming\Typora\typora-user-images\image-20220611160924049.png)
+<!--    事务配置-->
+    <bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager" id="dataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
 
+    <tx:advice id="txAdvice" transaction-manager="dataSourceTransactionManager" >
+        <tx:attributes>
+            <tx:method name="add*"/>
+            <tx:method name="insert*"/>
+            <tx:method name="update*"/>
+            <tx:method name="delete*"/>
+        </tx:attributes>
+    </tx:advice>
+
+<!--    配置aop 事务-->
+    <aop:config>
+<!--        第一个*代表所有的返回值类型；第二个*代表所有的类*第三个*代表所有的方法；..代表所有的参数  -->
+        <aop:pointcut id="pc1" expression="execution(* org.mm.meetingmanage.service.*.*(..))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="pc1"/>
+    </aop:config>
+
+</beans>
